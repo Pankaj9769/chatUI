@@ -6,7 +6,9 @@ import { io } from "socket.io-client";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 
-const socket = io("https://chatapi-sigma-weld.vercel.app/");
+const socket = io("https://chatapi-sigma-weld.vercel.app/", {
+  withCredentials: true,
+});
 const Dashboard = () => {
   const navigate = useNavigate();
   const [token, setToken] = useState(localStorage.getItem("token"));
