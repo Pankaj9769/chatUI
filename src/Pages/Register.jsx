@@ -13,7 +13,7 @@ export default function Register() {
 
     try {
       const response = await fetch(
-        "https://chatapi-sigma-weld.vercel.app/api/auth/register",
+        "https://chatapi-53sk.onrender.com/api/auth/register",
         {
           headers: { "Content-Type": "application/json" },
           method: "POST",
