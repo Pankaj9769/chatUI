@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import Userlist from "../components/UserList";
+import Userlist from "../components/Userlist";
 import Chatroom from "../components/Chatroom";
 // import Dashboard from "./Pages/Dashboard";
 import { io } from "socket.io-client";
