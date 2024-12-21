@@ -18,7 +18,7 @@ export default function Login() {
 
     try {
       const response = await fetch(
-        "https://chatapi-sigma-weld.vercel.app/api/auth/login",
+        "https://chatapi-53sk.onrender.com/api/auth/login",
         {
           headers: { "Content-Type": "application/json" },
           method: "POST",

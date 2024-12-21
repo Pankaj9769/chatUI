@@ -6,7 +6,7 @@ import { io } from "socket.io-client";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 
-const socket = io("https://chatapi-sigma-weld.vercel.app/", {
+const socket = io("https://chatapi-53sk.onrender.com/", {
   withCredentials: true,
 });
 const Dashboard = () => {
@@ -31,7 +31,7 @@ const Dashboard = () => {
     const fetchUsers = async () => {
       try {
         const response = await fetch(
-          "https://chatapi-sigma-weld.vercel.app/api/users",
+          "https://chatapi-53sk.onrender.com//api/users",
           {
             headers: {
               Authorization: `Bearer ${token}`,
