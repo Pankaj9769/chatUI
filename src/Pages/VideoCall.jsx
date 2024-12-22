@@ -116,7 +116,8 @@ const VideoCallDialog = ({ closeCall, socket }) => {
 
           // Check and assign the video element
           const remoteVideo = document.getElementById("remote-video");
-          console.log(remoteVideo + "->" + remoteStreamRef.current);
+          console.log(remoteVideo + "->");
+          console.log(remoteStreamRef.current);
           if (remoteVideo) {
             remoteVideo.srcObject = remoteStreamRef.current;
             console.log("Assigned remoteStreamRef to remote-video.");
