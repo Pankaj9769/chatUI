@@ -118,7 +118,7 @@ const VideoCallDialog = ({ closeCall, socket }) => {
 
           // Check and assign the video element
           const remoteVideo = document.getElementById("remote-video");
-          // console.log(remoteVideo + "->");
+          console.log("->");
           // remoteStreamRef.current.add
           console.log(event.streams);
           remoteStreamRef.current.addTrack(event.track);
