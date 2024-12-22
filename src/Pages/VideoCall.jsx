@@ -106,16 +106,29 @@ const VideoCallDialog = ({ closeCall, socket }) => {
 
         // Handle remote stream
         peer.ontrack = (event) => {
-          console.log("Remote Video");
-          console.log(event);
+          console.log("Remote Video Event:", event);
+
+          // Ensure remoteStreamRef.current is initialized
           if (!remoteStreamRef.current) {
             remoteStreamRef.current = new MediaStream();
-            const remoteVideo = document.getElementById("remote-video");
-            if (remoteVideo) {
-              remoteVideo.srcObject = remoteStreamRef.current;
-            }
+            console.log("Initialized remoteStreamRef.");
           }
+
+          // Check and assign the video element
+          const remoteVideo = document.getElementById("remote-video");
+          if (remoteVideo) {
+            remoteVideo.srcObject = remoteStreamRef.current;
+            console.log("Assigned remoteStreamRef to remote-video.");
+          } else {
+            console.error("Remote video element not found.");
+          }
+
+          // Add track to the MediaStream
           remoteStreamRef.current.addTrack(event.track);
+          console.log(
+            "Track added to remoteStreamRef:",
+            remoteStreamRef.current.getTracks()
+          );
         };
 
         // Create offer to initiate the call
