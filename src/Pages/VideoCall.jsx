@@ -120,6 +120,7 @@ const VideoCallDialog = ({ closeCall, socket }) => {
           const remoteVideo = document.getElementById("remote-video");
           // console.log(remoteVideo + "->");
           // remoteStreamRef.current.add
+          console.log(event.streams);
           remoteStreamRef.current.addTrack(event.track);
           console.log(remoteStreamRef.current);
           if (remoteVideo) {
