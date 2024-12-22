@@ -106,6 +106,8 @@ const VideoCallDialog = ({ closeCall, socket }) => {
 
         // Handle remote stream
         peer.ontrack = (event) => {
+          console.log("Remote Video");
+          console.log(event);
           if (!remoteStreamRef.current) {
             remoteStreamRef.current = new MediaStream();
             const remoteVideo = document.getElementById("remote-video");
