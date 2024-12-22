@@ -5,8 +5,9 @@ import Chatroom from "../components/Chatroom";
 import { io } from "socket.io-client";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
+import { API_LINK } from "@/utils/link";
 
-const socket = io("https://chatapi-53sk.onrender.com/", {
+const socket = io(`${API_LINK}`, {
   withCredentials: true,
 });
 const Dashboard = () => {
@@ -30,16 +31,13 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch(
-          "https://chatapi-53sk.onrender.com/api/users",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            method: "GET",
-          }
-        );
+        const response = await fetch(`${API_LINK}api/users`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          method: "GET",
+        });
 
         const data = await response.json();
 

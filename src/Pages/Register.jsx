@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
+import { API_LINK } from "@/utils/link";
 export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -12,14 +13,11 @@ export default function Register() {
     const user = { name, email, password };
 
     try {
-      const response = await fetch(
-        "https://chatapi-53sk.onrender.com/api/auth/register",
-        {
-          headers: { "Content-Type": "application/json" },
-          method: "POST",
-          body: JSON.stringify(user),
-        }
-      );
+      const response = await fetch(`${API_LINK}api/auth/register`, {
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+        body: JSON.stringify(user),
+      });
 
       const data = await response.json();
       if (!response.ok) {
