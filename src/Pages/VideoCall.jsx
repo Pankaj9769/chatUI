@@ -74,22 +74,24 @@ const VideoCallDialog = ({ closeCall, socket }) => {
   };
 
   useEffect(() => {
-    // Set up the local media stream
+    // Set up local media stream
     navigator.mediaDevices
       .getUserMedia({ video: true, audio: true })
       .then((stream) => {
         localStreamRef.current = stream;
 
-        // Display local video stream
+        // Display local video
         const localVideo = document.getElementById("local-video");
-        if (localVideo) localVideo.srcObject = stream;
+        if (localVideo) {
+          localVideo.srcObject = stream;
+        }
 
         // Initialize peer connection
         const peer = new RTCPeerConnection({
           iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
         });
 
-        // Add local tracks to the peer connection
+        // Add local tracks to peer connection
         stream.getTracks().forEach((track) => peer.addTrack(track, stream));
 
         // Handle ICE candidates
@@ -104,16 +106,34 @@ const VideoCallDialog = ({ closeCall, socket }) => {
 
         // Handle remote stream
         peer.ontrack = (event) => {
+          console.log("Remote Video Event:", event);
+
+          // Ensure remoteStreamRef.current is initialized
           if (!remoteStreamRef.current) {
             remoteStreamRef.current = new MediaStream();
+            console.log("Initialized remoteStreamRef.");
           }
-          remoteStreamRef.current.addTrack(event.track);
 
+          // Check and assign the video element
           const remoteVideo = document.getElementById("remote-video");
-          if (remoteVideo) remoteVideo.srcObject = remoteStreamRef.current;
+          console.log(remoteVideo + "->");
+          console.log(remoteStreamRef.current);
+          if (remoteVideo) {
+            remoteVideo.srcObject = remoteStreamRef.current;
+            console.log("Assigned remoteStreamRef to remote-video.");
+          } else {
+            console.error("Remote video element not found.");
+          }
+
+          // Add track to the MediaStream
+          remoteStreamRef.current.addTrack(event.track);
+          console.log(
+            "Track added to remoteStreamRef:",
+            remoteStreamRef.current.getTracks()
+          );
         };
 
-        // Create and send an offer
+        // Create offer to initiate the call
         peer
           .createOffer()
           .then((offer) => peer.setLocalDescription(offer))
@@ -130,19 +150,18 @@ const VideoCallDialog = ({ closeCall, socket }) => {
       .catch((error) => console.error("Error accessing media devices:", error));
 
     return () => {
-      // Clean up resources on unmount
+      // Clean up peer connection and streams
       if (peerConnectionRef.current) peerConnectionRef.current.close();
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach((track) => track.stop());
       }
-      remoteStreamRef.current = null;
+      if (remoteStreamRef.current) remoteStreamRef.current = null;
     };
   }, [receiver, socket]);
 
   useEffect(() => {
     // Handle incoming offer
     const handleOffer = async ({ offer, roomId }) => {
-      if (!peerConnectionRef.current) return;
       try {
         await peerConnectionRef.current.setRemoteDescription(
           new RTCSessionDescription(offer)
@@ -165,7 +184,6 @@ const VideoCallDialog = ({ closeCall, socket }) => {
 
     // Handle incoming ICE candidates
     const handleICECandidate = async ({ candidate }) => {
-      if (!peerConnectionRef.current) return;
       if (peerConnectionRef.current.remoteDescription) {
         try {
           await peerConnectionRef.current.addIceCandidate(candidate);
@@ -187,7 +205,6 @@ const VideoCallDialog = ({ closeCall, socket }) => {
   }, [socket]);
 
   const handleEndCall = () => {
-    // End call and clean up resources
     if (peerConnectionRef.current) {
       peerConnectionRef.current.close();
       peerConnectionRef.current = null;
@@ -211,13 +228,18 @@ const VideoCallDialog = ({ closeCall, socket }) => {
         <DialogHeader>
           <DialogTitle>Video Call</DialogTitle>
         </DialogHeader>
+        {/* Descriptive element for aria-describedby */}
         <p id="dialog-description" className="sr-only">
           This is a video call interface. You can see local and remote videos
           here.
         </p>
         <div className="mt-4 aspect-video bg-gray-200 rounded-lg flex items-center justify-center">
-          <video id="local-video" autoPlay muted className="w-32 h-32 ml-0" />
-          <video id="remote-video" autoPlay className="w-32 h-32" />
+          <div>
+            <video id="local-video" autoPlay muted className="w-32 h-32 ml-0" />
+          </div>
+          <div>
+            <video id="remote-video" autoPlay className="w-32 h-32" />
+          </div>
         </div>
         <div className="mt-4 flex justify-center">
           <Button
