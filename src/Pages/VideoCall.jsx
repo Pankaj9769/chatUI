@@ -83,6 +83,8 @@ const VideoCallDialog = ({ closeCall, socket }) => {
         // Display local video
         const localVideo = document.getElementById("local-video");
         if (localVideo) {
+          console.log("stream");
+          console.log(stream);
           localVideo.srcObject = stream;
         }
 
