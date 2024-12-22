@@ -204,11 +204,20 @@ const VideoCallDialog = ({ closeCall, socket }) => {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={setIsOpen}
+      aria-describedby="dialog-description"
+    >
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Video Call</DialogTitle>
         </DialogHeader>
+        {/* Descriptive element for aria-describedby */}
+        <p id="dialog-description" className="sr-only">
+          This is a video call interface. You can see local and remote videos
+          here.
+        </p>
         <div className="mt-4 aspect-video bg-gray-200 rounded-lg flex items-center justify-center">
           <div>
             <video id="local-video" autoPlay muted className="w-32 h-32 ml-0" />
