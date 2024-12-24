@@ -123,14 +123,14 @@ const VideoCallDialog = ({ closeCall, socket }) => {
           console.log(event.streams);
           console.log(remoteStreamRef.current);
           if (remoteVideo) {
-            // remoteVideo.srcObject = remoteStreamRef.current;
-            remoteVideo.srcObject = event.streams[0];
+            remoteVideo.srcObject = remoteStreamRef.current;
+            // remoteVideo.srcObject = event.streams[0];
             console.log("Assigned remoteStreamRef to remote-video.");
           } else {
             console.error("Remote video element not found.");
           }
 
-          remoteStreamRef.current.addTrack(event.track);
+          remoteStreamRef.current.addTrack(event.streams[0]);
           // Add track to the MediaStream
           console.log(
             "Track added to remoteStreamRef:",
