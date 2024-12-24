@@ -7,11 +7,11 @@ import { API_LINK } from "@/utils/link";
 
 import { Account, Client, Storage } from "appwrite";
 
-const client = new Client()
-  .setProject("67692a65002c349b75f3")
-  .setEndpoint("https://cloud.appwrite.io/v1");
-const account = new Account(client);
-const storage = new Storage(client);
+// const client = new Client()
+//   .setProject("67692a65002c349b75f3")
+//   .setEndpoint("https://cloud.appwrite.io/v1");
+// const account = new Account(client);
+// const storage = new Storage(client);
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -45,19 +45,19 @@ export default function Login() {
       localStorage.setItem("user", JSON.stringify(data.user));
 
       // Authenticate the user with Appwrite
-      try {
-        const session = await account.createEmailPasswordSession(
-          data.user.email,
-          password
-        );
-        console.log("User authenticated with Appwrite:", session);
+      // try {
+      //   const session = await account.createEmailPasswordSession(
+      //     data.user.email,
+      //     password
+      //   );
+      //   console.log("User authenticated with Appwrite:", session);
 
-        // Optionally store Appwrite session details in localStorage if needed
-        localStorage.setItem("appwriteSession", JSON.stringify(session));
-      } catch (error) {
-        console.error("Appwrite authentication failed:", error);
-        alert("Appwrite authentication failed, please log in.");
-      }
+      //   // Optionally store Appwrite session details in localStorage if needed
+      //   localStorage.setItem("appwriteSession", JSON.stringify(session));
+      // } catch (error) {
+      //   console.error("Appwrite authentication failed:", error);
+      //   alert("Appwrite authentication failed, please log in.");
+      // }
 
       // Navigate to home page or desired route
       navigate("/");
