@@ -84,10 +84,10 @@ const VideoCallDialog = ({ closeCall, socket }) => {
         // Display local video
         const remoteVideo = document.getElementById("remote-video");
         const localVideo = document.getElementById("local-video");
-        if (remoteVideo) {
+        if (localVideo) {
           console.log("stream");
           console.log(stream);
-          remoteVideo.srcObject = stream;
+          localVideo.srcObject = stream;
         }
 
         // Initialize peer connection
@@ -119,8 +119,8 @@ const VideoCallDialog = ({ closeCall, socket }) => {
           }
 
           // Assign the video element
-          if (localVideo) {
-            localVideo.srcObject = remoteStreamRef.current;
+          if (remoteVideo) {
+            remoteVideo.srcObject = remoteStreamRef.current;
             console.log("Assigned remoteStreamRef to remote-video.");
           } else {
             console.error("Remote video element not found.");
