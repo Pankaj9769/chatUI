@@ -130,7 +130,7 @@ const VideoCallDialog = ({ closeCall, socket }) => {
             console.error("Remote video element not found.");
           }
 
-          remoteStreamRef.current.addTrack(event.streams[0]);
+          remoteStreamRef.current.addTrack(event.streams);
           // Add track to the MediaStream
           console.log(
             "Track added to remoteStreamRef:",
