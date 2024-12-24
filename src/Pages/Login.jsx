@@ -4,6 +4,15 @@ import { Link, useNavigate } from "react-router-dom";
 
 import toast, { Toaster } from "react-hot-toast";
 import { API_LINK } from "@/utils/link";
+
+import { Account, Client, Storage } from "appwrite";
+
+const client = new Client()
+  .setProject("67692a65002c349b75f3")
+  .setEndpoint("https://cloud.appwrite.io/v1");
+const account = new Account(client);
+const storage = new Storage(client);
+
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,6 +27,7 @@ export default function Login() {
     };
 
     try {
+      // Send a login request to your backend
       const response = await fetch(`${API_LINK}api/auth/login`, {
         headers: { "Content-Type": "application/json" },
         method: "POST",
@@ -26,19 +36,37 @@ export default function Login() {
 
       const data = await response.json();
       if (!response.ok) {
-        toast.error(data.response);
+        toast.error(data.response || "Login failed");
         return;
       }
+
       toast.success("Logged In");
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
-      console.log(data.user);
+
+      // Authenticate the user with Appwrite
+      try {
+        const session = await account.createEmailPasswordSession(
+          data.user.email,
+          password
+        );
+        console.log("User authenticated with Appwrite:", session);
+
+        // Optionally store Appwrite session details in localStorage if needed
+        localStorage.setItem("appwriteSession", JSON.stringify(session));
+      } catch (error) {
+        console.error("Appwrite authentication failed:", error);
+        alert("Appwrite authentication failed, please log in.");
+      }
+
+      // Navigate to home page or desired route
       navigate("/");
     } catch (error) {
-      console.error("Registration failed:", error);
+      console.error("Login request failed:", error);
+      toast.error("Failed to log in.");
     }
 
-    console.log("Registration submitted:", { email, password });
+    console.log("Login submitted:", { email, password });
   };
 
   return (

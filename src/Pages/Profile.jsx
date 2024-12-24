@@ -1,25 +1,47 @@
 import React, { useState } from "react";
 import { PencilIcon, CheckIcon } from "lucide-react";
+import toast, { Toaster } from "react-hot-toast";
+import { API_LINK } from "@/utils/link";
+import { Account, Client, Storage } from "appwrite";
+const client = new Client()
+  .setProject("67692a65002c349b75f3")
+  .setEndpoint("https://cloud.appwrite.io/v1");
 
+const storage = new Storage(client);
 const Profile = () => {
+  const account = new Account(client);
   const [profileImage, setProfileImage] = useState(
     "/placeholder.svg?height=200&width=200"
   );
-  const [name, setName] = useState("John Doe");
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [, setName] = useState("John Doe");
   const [email, setEmail] = useState("john.doe@example.com");
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingEmail, setIsEditingEmail] = useState(false);
 
   const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
+  const handleImageChange = async (e) => {
+    const session = await account.getSession("current"); // Get the current session
+
+    if (!session) {
+      console.error("User is not authenticated");
+      return;
+    }
+
+    // You need to set the session JWT token before making requests to the Appwrite server
+    client.setJWT(session.jwt);
+    const file = e.target.files[0]; // Get the selected file
     if (file) {
+      // Preview the image using FileReader (Base64 encoding)
       const reader = new FileReader();
       reader.onloadend = () => {
-        setProfileImage(reader.result);
+        setProfileImage(reader.result); // Set the base64 image for preview
       };
       reader.readAsDataURL(file);
+
+      // You can store the file for upload later
+      setSelectedFile(file); // Store the actual file (you'll send this in the upload request)
     }
   };
 
@@ -31,12 +53,54 @@ const Profile = () => {
     setEmail(e.target.value);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Implement your form submission logic here
-    console.log("Profile updated:", { name, email, profileImage });
-    setIsEditingName(false);
-    setIsEditingEmail(false);
+
+    if (!profileImage) {
+      toast.error("No file selected!");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", selectedFile); // Attach file
+    formData.append("email", user.email); // Attach email
+
+    try {
+      const file = formData.get("file");
+
+      const resp = await storage.createFile(
+        "6769bb3300271c8d647f", // Your Appwrite bucket ID
+        file.name, // The file name, you can generate a unique name here if needed
+        file // The file itself
+      );
+      console.log("resp");
+      console.log(resp);
+      const updateResponse = await fetch(
+        `${API_LINK}api/update-profile-image`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: user.email,
+            responseId: resp.$id,
+          }),
+        }
+      );
+
+      const updateData = await updateResponse.json();
+      if (updateData.success) {
+        toast.success("Profile image updated successfully!");
+      } else {
+        toast.error("Failed to update profile image in the database.");
+      }
+
+      // Check if the response is in JSON format
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast.error("Failed to upload image.");
+    }
   };
 
   return (
@@ -138,6 +202,7 @@ const Profile = () => {
           </button>
         </form>
       </div>
+      <Toaster />
     </div>
   );
 };

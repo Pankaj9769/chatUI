@@ -2,7 +2,9 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
+import { Client, Account } from "appwrite";
 import { API_LINK } from "@/utils/link";
+
 export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -11,7 +13,6 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const user = { name, email, password };
-
     try {
       const response = await fetch(`${API_LINK}api/auth/register`, {
         headers: { "Content-Type": "application/json" },
@@ -25,12 +26,21 @@ export default function Register() {
         return;
       }
 
-      // console.log("Registration successful:", data);
       toast.success("Registered Successfully");
+      // console.log("Registration successful:", data);
+      // toast.success("Registered Successfully");
     } catch (error) {
       console.error("Registration failed:", error);
     }
   };
+
+  // try {
+  //   // Create user in Appwrite
+
+  // } catch (error) {
+  //   console.error("Registration failed:", error);
+  //   toast.error(error.message || "Registration failed");
+  // }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-400 via-pink-500 to-red-500">

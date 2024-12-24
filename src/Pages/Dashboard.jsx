@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import Userlist from "../components/Userlist";
 import Chatroom from "../components/Chatroom";
-// import Dashboard from "./Pages/Dashboard";
 import { io } from "socket.io-client";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
