@@ -67,6 +67,7 @@ const VideoCallDialog = ({ closeCall, socket }) => {
   const localStreamRef = useRef(null);
   const remoteStreamRef = useRef(null);
   const pendingCandidates = useRef([]);
+  const [remote, setRemote] = useState(false);
 
   const getRoomId = () => {
     const userId = JSON.parse(localStorage.getItem("user"))._id;
@@ -128,6 +129,7 @@ const VideoCallDialog = ({ closeCall, socket }) => {
           // Add track to the MediaStream
           if (event.track instanceof MediaStreamTrack) {
             remoteStreamRef.current.addTrack(event.track);
+            setRemote(true);
             console.log(
               "Track added to remoteStreamRef:",
               remoteStreamRef.current.getTracks()
@@ -155,6 +157,7 @@ const VideoCallDialog = ({ closeCall, socket }) => {
 
     return () => {
       // Clean up peer connection and streams
+      setRemote(false);
       if (peerConnectionRef.current) peerConnectionRef.current.close();
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach((track) => track.stop());
@@ -242,7 +245,11 @@ const VideoCallDialog = ({ closeCall, socket }) => {
             <video id="local-video" autoPlay muted className="w-32 h-32 ml-0" />
           </div>
           <div>
-            <video id="remote-video" autoPlay className="w-32 h-32" />
+            <video
+              id="remote-video"
+              autoPlay
+              className="w-32 h-32 playsinline"
+            />
           </div>
         </div>
         <div className="mt-4 flex justify-center">
