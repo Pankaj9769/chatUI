@@ -5,12 +5,27 @@ class PeerService {
       this.peer = new RTCPeerConnection({
         iceServers: [
           {
-            urls: "stun:stun.l.google.com:19302",
+            urls: "stun:stun.relay.metered.ca:80",
           },
           {
-            urls: "turn:relay.metered.ca:80",
-            username: "publicUsername",
-            credential: "publicPassword",
+            urls: "turn:in.relay.metered.ca:80",
+            username: "98bcd1a1beadc91ee56f60bc",
+            credential: "s25G1WH5IOc+bxCA",
+          },
+          {
+            urls: "turn:in.relay.metered.ca:80?transport=tcp",
+            username: "98bcd1a1beadc91ee56f60bc",
+            credential: "s25G1WH5IOc+bxCA",
+          },
+          {
+            urls: "turn:in.relay.metered.ca:443",
+            username: "98bcd1a1beadc91ee56f60bc",
+            credential: "s25G1WH5IOc+bxCA",
+          },
+          {
+            urls: "turns:in.relay.metered.ca:443?transport=tcp",
+            username: "98bcd1a1beadc91ee56f60bc",
+            credential: "s25G1WH5IOc+bxCA",
           },
         ],
       });
