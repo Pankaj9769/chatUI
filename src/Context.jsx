@@ -1,28 +1,32 @@
-import React, { createContext, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { io } from "socket.io-client";
+import { API_LINK } from "./utils/link";
 
-export const MyContext = createContext({
-  user: null,
-  friends: null,
-  notify: false,
-});
+export const SocketContext = createContext(null);
 
-const ContextProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [friends, setFriends] = useState(null);
-  const [notify, setNotify] = useState([]);
+export const useSocket = () => {
+  const socket = useContext(SocketContext);
+  return socket;
+};
 
-  const contextValue = {
-    user,
-    setUser,
-    friends,
-    setFriends,
-    notify,
-    setNotify,
-  };
+const SocketProvider = ({ children }) => {
+  const socket = useMemo(() => io(API_LINK));
+  const userId = JSON.parse(localStorage.getItem("user"));
+  if (userId) {
+    socket.emit("register", {
+      userId: userId._id,
+    });
+  }
 
   return (
-    <MyContext.Provider value={contextValue}>{children}</MyContext.Provider>
+    <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>
   );
 };
 
-export default ContextProvider;
+export default SocketProvider;

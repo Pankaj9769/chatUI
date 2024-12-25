@@ -6,6 +6,7 @@ import toast, { Toaster } from "react-hot-toast";
 import { API_LINK } from "@/utils/link";
 
 import { Account, Client, Storage } from "appwrite";
+import { useSocket } from "@/Context";
 
 // const client = new Client()
 //   .setProject("67692a65002c349b75f3")
@@ -17,7 +18,7 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
-
+  const socket = useSocket();
   const handleSubmit = async (e) => {
     e.preventDefault();
 

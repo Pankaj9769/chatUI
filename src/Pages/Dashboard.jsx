@@ -1,14 +1,9 @@
 import { useEffect, useState } from "react";
 import Userlist from "../components/Userlist";
 import Chatroom from "../components/Chatroom";
-import { io } from "socket.io-client";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import { API_LINK } from "@/utils/link";
-
-const socket = io(`${API_LINK}`, {
-  withCredentials: true,
-});
 const Dashboard = () => {
   const navigate = useNavigate();
   const [token, setToken] = useState(localStorage.getItem("token"));
@@ -71,13 +66,9 @@ const Dashboard = () => {
   }, []);
   return (
     <>
-      {/* <div className=" flex flex-row h-full p-20 gap-20  bg-red-100">
+      <div className="flex h-screen bg-background">
         <Userlist friends={friends} setChatRoom={setChat} />
         <Chatroom user={chat} />
-      </div> */}
-      <div className="flex h-screen bg-background">
-        <Userlist friends={friends} setChatRoom={setChat} socket={socket} />
-        <Chatroom user={chat} socket={socket} />
         <Toaster />
       </div>
     </>

@@ -4,12 +4,21 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Register from "./Pages/Register";
 import Login from "./Pages/Login";
 import Dashboard from "./Pages/Dashboard";
-import ContextProvider from "./Context";
+import ContextProvider, { useSocket } from "./Context";
 import Profile from "./Pages/Profile";
 import VideoCallDialog from "./Pages/VideoCall";
 // Replace with your server's URL
 
 const App = () => {
+  const socket = useSocket();
+
+  useEffect(() => {
+    // console.log("Inssss")
+    socket.on("call:incoming", ({ from }) => {
+      console.log(`${from.name} is calling`);
+    });
+  }, [socket]);
+
   return (
     <>
       {/* <ContextProvider> */}

@@ -7,17 +7,25 @@ import { useDispatch, useSelector } from "react-redux";
 import { putUser } from "@/utils/receiverSlice";
 import { CiMenuKebab } from "react-icons/ci";
 import { useNavigate } from "react-router-dom";
-function Userlist({ setChatRoom, friends, socket }) {
+import { useSocket } from "@/Context";
+function Userlist({ setChatRoom, friends }) {
+  const socket = useSocket();
   // const user = useSelector((state) => state.receiver);
   const [option, setOption] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const receiver = useSelector((state) => state.receiver);
 
   const goToProfile = () => {
     navigate("/profile");
   };
 
   const handleLogout = () => {
+    socket.emit("offline", {
+      from: JSON.parse(localStorage.getItem("user"))._id,
+      to: receiver._id,
+    });
+
     localStorage.clear();
     navigate("/login");
   };
@@ -76,14 +84,14 @@ function Userlist({ setChatRoom, friends, socket }) {
               key={user._id}
               className="flex items-center justify-between w-full px-4 py-2 hover:bg-purple-50"
               onClick={() => {
-                socket.emit("joinRoom", {
-                  sender: JSON.parse(localStorage.getItem("user"))._id,
-                  receiver: user._id,
-                });
-                // setNotify((prev) => prev.filter((ch) => ch !== user._id));
-                // dispatch(receiverAction);
+                // No need to emit "joinRoom" here if you're not using chat rooms
+                // Optionally, you can store the user as the receiver for a direct chat
                 dispatch(putUser(user));
-                setChatRoom(user);
+                setChatRoom(user); // Set the selected friend as the current chat recipient
+                socket.emit("fetchChatHistory", {
+                  from: JSON.parse(localStorage.getItem("user"))._id,
+                  to: user._id,
+                });
               }}
             >
               <div className="flex flex-row items-center">
@@ -93,13 +101,9 @@ function Userlist({ setChatRoom, friends, socket }) {
                 </Avatar>
                 <span className="text-sm">{user.name}</span>
               </div>
-              {/* {notify.includes(user._id) && (
-                <span className="inline-block bg-primary tracking-wide subpixel-antialiased text-xs px-1 text-white rounded-full ">
-                  new
-                </span>
-              )} */}
             </button>
           ))}
+
         <Toaster />
       </ScrollArea>
     </div>

@@ -1,96 +1,53 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { ScrollArea } from "./ui/scroll-area";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import { Send, Video } from "lucide-react";
-import { MyContext } from "@/Context";
-import toast from "react-hot-toast";
+import { useSocket } from "@/Context";
 import { useDispatch, useSelector } from "react-redux";
-import { isOnline } from "@/utils/onlineUser";
 import { isTyping, notTyping } from "@/utils/typingUser";
-import { CiMenuKebab } from "react-icons/ci";
 import { useNavigate } from "react-router-dom";
 import VideoCallDialog from "@/Pages/VideoCall";
 import IncomingCallDialog from "@/Pages/IncomingCallDialog";
+import VideoCallRinging from "./Calling";
+import { fabClasses } from "@mui/material";
 
-function ChatRoom({ user, socket }) {
+function ChatRoom({ user }) {
+  const socket = useSocket();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [online, setOnline] = useState([]);
-  // const [typing, setTyping] = useState(false);
   const messagesEndRef = useRef(null);
   const receiver = useSelector((state) => state.receiver);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const typing = useSelector((state) => state.typing);
   const [call, setCall] = useState(false);
-  const [incomingCall, setIncoming] = useState(false);
-  // const { setNotify } = ssssuseContext(MyContext);
-  useEffect(() => {
-    console.log("New User->", online);
-  }, [online, setOnline]);
+  const [incomingCall, setIncoming] = useState(null);
+  const [pickedUp, setPickUp] = useState(false);
 
-  useEffect(() => {
-    socket.on("receiveMessage", (data) => {
-      console.log("New message received:", data.message);
-      if (data.sender !== JSON.parse(localStorage.getItem("user"))._id) {
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          {
-            text: data.message,
-            sender: "notme",
-          },
-        ]);
-        // if (user._id !== data.sender) {
-        //   setNotify((prevNotify) => [...prevNotify, data.sender]);
-        // }
-      }
-    });
+  const [isIncoming, setIsIncoming] = useState(false);
 
-    socket.on("typingIndicator", (data) => {
-      // toast.success(`${user} ->>> ${data}`);
-      // if (user && data === user._id)
-      dispatch(isTyping(data));
-      // setTyping(true);
-    });
+  const callUser = (to) => {
+    const from = {
+      _id: JSON.parse(localStorage.getItem("user"))._id,
+      name: JSON.parse(localStorage.getItem("user")).name,
+      socketId: socket.id,
+    };
+    console.log(to);
+    // socket.emit("call:user", { from, to });
+    // navigate('')
 
-    socket.on("notTypingIndicator", (data) => {
-      // setTyping(false);
-      dispatch(notTyping(data));
-    });
-
-    socket.on("online", (data) => {
-      console.log(`Hellooooo-> ${data}`);
-      // dispatch(isOnline(data));
-      setOnline([...online, data]);
-    });
-
-    // Listener for chat history
-    socket.on("chatHistory", (data) => {
-      setMessages([]);
-      const currentUser = JSON.parse(localStorage.getItem("user")); // Retrieve user once
-      const formattedMessages = data.messages.map((msg) => ({
-        text: msg.message,
-        sender: msg.sender === currentUser._id ? "me" : "notme",
-      }));
-      setMessages((prevMessages) => [...prevMessages, ...formattedMessages]); // Batch update
-    });
-
-    socket.on("offline", () => {
-      setOnline("Offline");
-    });
-  }, []);
-
-  // useEffect(() => {
-  //   console.log("RHESE ARE MSGS->" + messages);
-  // }, [messages]);
+    socket.emit("user:call", { from, to });
+    setCall(true);
+  };
 
   const handleSendMessage = (e) => {
     e.preventDefault();
     const data = {
-      sender: JSON.parse(localStorage.getItem("user"))._id,
-      receiver: user._id,
+      from: JSON.parse(localStorage.getItem("user"))._id,
+      to: user._id,
       message: newMessage,
     };
 
@@ -101,14 +58,113 @@ function ChatRoom({ user, socket }) {
     }
   };
 
+  const handleReceiveMessage = useCallback((data) => {
+    if (data.sender !== JSON.parse(localStorage.getItem("user"))._id) {
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        {
+          text: data.message,
+          sender: "notme",
+        },
+      ]);
+    }
+  });
+
+  const handleFetchHistory = (data) => {
+    setMessages([]);
+    const currentUser = JSON.parse(localStorage.getItem("user")); // Retrieve user once
+    const formattedMessages = data.messages.map((msg) => ({
+      text: msg.message,
+      sender: msg.sender === currentUser._id ? "me" : "notme",
+    }));
+    setMessages((prevMessages) => [...prevMessages, ...formattedMessages]); // Batch update
+  };
+
+  const handleAddTypingUser = useCallback(({ from }) => {
+    dispatch(isTyping(from));
+  });
+
+  const handleRemoveTypingUser = useCallback(({ from }) => {
+    dispatch(notTyping(from));
+  });
+
+  const handleAddOnlineUser = useCallback(({ from }) => {
+    console.log(from);
+    if (online.includes(from)) return;
+    socket.emit("online", {
+      from: JSON.parse(localStorage.getItem("user"))._id,
+      to: receiver._id,
+    });
+    setOnline([...online, from]);
+  });
+
   useEffect(() => {
-    console.log("rec->");
-    console.log(receiver.name);
-  }, [receiver]);
+    socket.emit("online", {
+      from: JSON.parse(localStorage.getItem("user"))._id,
+      to: receiver._id,
+    });
+
+    return () => {};
+  }, []);
+
+  useEffect(() => {
+    socket.on("receiveMessage", handleReceiveMessage);
+    socket.on("chatHistory", handleFetchHistory);
+
+    return () => {
+      socket.off("chatHistory", handleFetchHistory);
+      socket.off("receiveMessage", handleReceiveMessage);
+    };
+  }, [socket, handleFetchHistory, handleReceiveMessage]);
+
+  useEffect(() => {
+    socket.on("typingIndicator", handleAddTypingUser);
+    socket.on("notTypingIndicator", handleRemoveTypingUser);
+    socket.on("online", handleAddOnlineUser);
+
+    socket.on("offline", ({ from }) => {
+      setOnline((prev) => prev.filter((id) => id !== from));
+    });
+
+    return () => {
+      socket.off("typingIndicator", handleAddTypingUser);
+      socket.off("notTypingIndicator", handleRemoveTypingUser);
+      socket.off("online", handleAddOnlineUser);
+    };
+  }, [
+    socket,
+    handleAddOnlineUser,
+    handleAddTypingUser,
+    handleRemoveTypingUser,
+  ]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  const handleIncomingCall = ({ from }) => {
+    console.log(`${from.name} is calling`);
+    setIsIncoming(true);
+    setIncoming(from);
+  };
+
+  const handleCallHungUp = () => {
+    setIncoming(null);
+  };
+
+  useEffect(() => {
+    socket.on("call:incoming", handleIncomingCall);
+    socket.on("call:hungup", handleCallHungUp);
+    socket.on("user:call:pickedUp", ({ from }) => {
+      setPickUp(true);
+      setCall(false);
+    });
+
+    return () => {
+      socket.off("call:incoming", handleIncomingCall);
+      socket.off("call:hungup", handleCallHungUp);
+    };
+  }, [socket, handleIncomingCall, handleCallHungUp]);
 
   if (!user) {
     return (
@@ -120,12 +176,16 @@ function ChatRoom({ user, socket }) {
 
   return (
     <div className="flex-1 flex flex-col">
-      {call && <VideoCallDialog closeCall={setCall} socket={socket} />}
+      {call && <VideoCallRinging closeCall={setCall} socket={socket} />}
       {incomingCall && (
         <IncomingCallDialog
-          callerAvatar={<AvatarImage alt={receiver.name} />}
-          callerName={receiver.name}
+          setPickUp={setPickUp}
+          callerAvatar={<AvatarImage alt={incomingCall.name} />}
+          caller={incomingCall}
         />
+      )}
+      {pickedUp && (
+        <VideoCallDialog isIncoming={isIncoming} closeCall={setPickUp} />
       )}
       <div className="border-b border-border p-4 bg-purple-50 flex flex-row items-center justify-between">
         <div className=" flex items-center">
@@ -152,7 +212,7 @@ function ChatRoom({ user, socket }) {
         </div>
         <button
           onClick={() => {
-            setCall(true);
+            callUser(receiver);
           }}
           className="hover:bg-purple-100 p-2 rounded-full hover:text-purple-700 cursor-pointer"
         >
@@ -195,14 +255,14 @@ function ChatRoom({ user, socket }) {
           className="flex-1 mr-2"
           onFocus={() => {
             socket.emit("typing", {
-              receiver: receiver._id,
-              sender: JSON.parse(localStorage.getItem("user"))._id,
+              to: receiver._id,
+              from: JSON.parse(localStorage.getItem("user"))._id,
             });
           }}
           onBlur={() => {
             socket.emit("notTyping", {
-              receiver: receiver._id,
-              sender: JSON.parse(localStorage.getItem("user"))._id,
+              to: receiver._id,
+              from: JSON.parse(localStorage.getItem("user"))._id,
             });
           }}
         />
