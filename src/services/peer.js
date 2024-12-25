@@ -7,6 +7,11 @@ class PeerService {
           {
             urls: "stun:stun.l.google.com:19302",
           },
+          {
+            urls: "turn:relay.metered.ca:80",
+            username: "publicUsername",
+            credential: "publicPassword",
+          },
         ],
       });
     }
