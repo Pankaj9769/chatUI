@@ -110,7 +110,7 @@ class PeerService {
             credential: "s25G1WH5IOc+bxCA",
           },
         ],
-        iceTransportPolicy: "relay",
+        iceTransportPolicy: "all", // Changed from "relay"
       });
 
       // Correct placement - INSIDE the constructor
