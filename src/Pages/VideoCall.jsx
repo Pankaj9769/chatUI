@@ -176,7 +176,7 @@ const VideoCallDialog = ({ closeCall, isIncoming }) => {
     for (const track of myStream.getTracks()) {
       peerConnection.peer.addTrack(track, myStream);
     }
-  }, [myStream]);
+  }, [myStream, peerConnection]);
 
   const receiveAnswer = useCallback(
     async ({ from, ans }) => {
