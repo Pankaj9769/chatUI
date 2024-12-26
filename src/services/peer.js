@@ -97,7 +97,7 @@ class PeerService {
             username: "98bcd1a1beadc91ee56f60bc",
             credential: "s25G1WH5IOc+bxCA",
           },
-          { urls: "stun.voxgratia.org" }, // STUN server as fallback
+          { urls: "stun:stun.voxgratia.org" }, // STUN server as fallback
         ],
       });
 
