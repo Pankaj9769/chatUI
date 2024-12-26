@@ -59,7 +59,7 @@ import { Button } from "@/components/ui/button";
 import { PhoneOff } from "lucide-react";
 import { useSelector } from "react-redux";
 import ReactPlayer from "react-player";
-import peer from "../services/peer";
+import PeerService from "../services/peer";
 import { useSocket } from "@/Context";
 
 const VideoCallDialog = ({ closeCall, isIncoming }) => {
@@ -71,25 +71,87 @@ const VideoCallDialog = ({ closeCall, isIncoming }) => {
   const [remoteId, setRemoteId] = useState(null);
   const [remoteStream, setRemoteStream] = useState(null);
 
-  const startCall = useCallback(async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: { width: { ideal: 1280 }, height: { ideal: 720 } }, // Request specific resolution
-      });
+  const [peerConnection, setPeerConnection] = useState(null); // Local component state
+  const [isPeerReady, setIsPeerReady] = useState(false);
+  const [hasMounted, setHasMounted] = useState(false);
 
-      const offer = await peer.getOffer();
-      const from = JSON.parse(localStorage.getItem("user"))._id;
-      const to = receiver._id;
-      socket.emit("offer", { from, to, offer });
+  useEffect(() => {
+    setHasMounted(true);
+    return () => {
+      setHasMounted(false);
+      if (peerConnection) {
+        peerConnection.peer.close();
+      }
+    };
+  }, []);
 
-      setMyStream(stream);
-    } catch (error) {
-      console.error("Error accessing media devices:", error);
-      closeCall(false);
-      setIsOpen(false);
+  const peerSet = useCallback(async () => {
+    const offer = await peerConnection.getOffer();
+    const from = JSON.parse(localStorage.getItem("user"))._id;
+    const to = receiver._id;
+    socket.emit("offer", { from, to, offer });
+  }, [peerConnection]);
+
+  useEffect(() => {
+    console.log("peer set");
+    console.log(peerConnection);
+
+    if (peerConnection && !isIncoming) {
+      peerSet();
     }
-  }, [closeCall]);
+  }, [peerConnection]);
+
+  useEffect(() => {
+    const startCall = async () => {
+      if (hasMounted && socket) {
+        const newPeer = new PeerService(socket, receiver._id);
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+          video: { width: { ideal: 1280 }, height: { ideal: 720 } }, // Request specific resolution
+        });
+        console.log("peer initiated");
+        setPeerConnection(newPeer);
+
+        setIsPeerReady(true);
+
+        setMyStream(stream);
+      }
+    };
+
+    startCall();
+  }, [socket, receiver, hasMounted]);
+
+  // useEffect(() => {
+  //   if (!isIncoming) {
+  //   } else {
+  //     receiveCall();
+  //   }
+  //   return () => {
+  //     if (myStream) {
+  //       myStream.getTracks().forEach((track) => track.stop());
+  //     }
+  //   };
+  // }, [startCall]);
+
+  // const startCall = useCallback(async () => {
+  //   try {
+  // const stream = await navigator.mediaDevices.getUserMedia({
+  //   audio: true,
+  //   video: { width: { ideal: 1280 }, height: { ideal: 720 } }, // Request specific resolution
+  // });
+
+  //     const offer = await peer.getOffer();
+  //     const from = JSON.parse(localStorage.getItem("user"))._id;
+  //     const to = receiver._id;
+  //     socket.emit("offer", { from, to, offer });
+
+  //     setMyStream(stream);
+  //   } catch (error) {
+  //     console.error("Error accessing media devices:", error);
+  //     closeCall(false);
+  //     setIsOpen(false);
+  //   }
+  // }, [closeCall]);
 
   const receiveCall = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -103,16 +165,16 @@ const VideoCallDialog = ({ closeCall, isIncoming }) => {
     async ({ from, offer }) => {
       // setRemoteId(from);
       localStorage.setItem("remoteId", from);
-      const ans = await peer.getAnswer(offer);
+      const ans = await peerConnection.getAnswer(offer);
       console.log("answer emitted");
       socket.emit("answer", { to: from, ans });
     },
-    [socket]
+    [socket, peerConnection]
   );
 
   const sendStream = useCallback(() => {
     for (const track of myStream.getTracks()) {
-      peer.peer.addTrack(track, myStream);
+      peerConnection.peer.addTrack(track, myStream);
     }
   }, [myStream]);
 
@@ -120,20 +182,20 @@ const VideoCallDialog = ({ closeCall, isIncoming }) => {
     async ({ from, ans }) => {
       // setRemoteId(from);
       localStorage.setItem("remoteId", from);
-      await peer.setLocalDescription(ans);
+      await peerConnection.setLocalDescription(ans);
       console.log("answer received");
       sendStream();
     },
-    [sendStream]
+    [sendStream, peerConnection]
   );
 
   const handleNegoReceiver = useCallback(
     async ({ from, offer }) => {
-      const ans = await peer.getAnswer(offer);
+      const ans = await peerConnection.getAnswer(offer);
       console.log("nego received");
       socket.emit("peer:nego:final", { to: from, ans });
     },
-    [socket]
+    [socket, peerConnection]
   );
 
   const handleTrack = useCallback(async (event) => {
@@ -145,15 +207,18 @@ const VideoCallDialog = ({ closeCall, isIncoming }) => {
 
   const handleNegoIncoming = useCallback(
     async ({ from, offer }) => {
-      const ans = await peer.getAnswer(offer);
+      const ans = await peerConnection.getAnswer(offer);
       socket.emit("peer:nego:done", { to: from, ans });
     },
-    [socket]
+    [socket, peerConnection]
   );
 
-  const handleNegoFinal = useCallback(async ({ ans }) => {
-    await peer.setLocalDescription(ans);
-  }, []);
+  const handleNegoFinal = useCallback(
+    async ({ ans }) => {
+      await peerConnection.setLocalDescription(ans);
+    },
+    [peerConnection]
+  );
 
   useEffect(() => {
     socket.on("user:offer", emitAnswer);
@@ -170,35 +235,41 @@ const VideoCallDialog = ({ closeCall, isIncoming }) => {
   }, [socket, emitAnswer, receiveAnswer, handleNegoIncoming, handleNegoFinal]);
 
   const handleNegoNeeded = useCallback(async () => {
-    const offer = await peer.getOffer();
+    const offer = await peerConnection.getOffer();
     console.log("nego sent");
     socket.emit("peer:nego:needed", {
       offer,
       to: localStorage.getItem("remoteId"),
     });
-  }, []);
+  }, [peerConnection]);
 
   useEffect(() => {
-    peer.peer.addEventListener("track", handleTrack);
-    peer.peer.addEventListener("negotiationneeded", handleNegoNeeded);
-
-    return () => {
-      peer.peer.removeEventListener("track", handleTrack);
-      peer.peer.removeEventListener("negotiationneeded", handleNegoNeeded);
-    };
-  }, [handleNegoNeeded, handleTrack]);
-
-  useEffect(() => {
-    if (!isIncoming) startCall();
-    else {
-      receiveCall();
+    if (peerConnection) {
+      peerConnection.peer.addEventListener("track", handleTrack);
+      peerConnection.peer.addEventListener(
+        "negotiationneeded",
+        handleNegoNeeded
+      );
     }
+
     return () => {
-      if (myStream) {
-        myStream.getTracks().forEach((track) => track.stop());
-      }
+      peerConnection?.peer.removeEventListener("track", handleTrack);
+      peerConnection?.peer.removeEventListener(
+        "negotiationneeded",
+        handleNegoNeeded
+      );
     };
-  }, [startCall]);
+  }, [handleNegoNeeded, handleTrack, peerConnection]);
+  // useEffect(() => {
+  //   // peer.peer.
+  //   peer.peer.addEventListener("track", handleTrack);
+  //   peer.peer.addEventListener("negotiationneeded", handleNegoNeeded);
+
+  //   return () => {
+  //     peer.peer.removeEventListener("track", handleTrack);
+  //     peer.peer.removeEventListener("negotiationneeded", handleNegoNeeded);
+  //   };
+  // }, [handleNegoNeeded, handleTrack]);
 
   const handleEndCall = () => {
     if (myStream) {
