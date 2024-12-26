@@ -87,7 +87,7 @@ class PeerService {
     if (!this.peer) {
       this.peer = new RTCPeerConnection({
         iceServers: [
-          { urls: "ping stun.voxgratia.org" },
+          { urls: "stun.voxgratia.org" },
           {
             urls: "turn:in.relay.metered.ca:80",
             username: "98bcd1a1beadc91ee56f60bc",
