@@ -100,6 +100,7 @@ class PeerService {
           },
         ],
         iceTransportPolicy: "all", // Changed from "relay"
+        iceCandidatePoolSize: 10,
       });
 
       // Correct placement - INSIDE the constructor
@@ -121,6 +122,13 @@ class PeerService {
       this.socket.on("ice-candidate", (candidate) => {
         this.peer.addIceCandidate(candidate);
       });
+
+      this.peer.onconnectionstatechange = () => {
+        console.log("Connection state:", this.peer.connectionState);
+        if (this.peer.connectionState === "failed") {
+          this.initializePeerConnection(); // Recreate connection
+        }
+      };
 
       this.peer.oniceconnectionstatechange = (event) => {
         console.log(
