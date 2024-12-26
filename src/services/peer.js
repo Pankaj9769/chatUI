@@ -89,18 +89,16 @@ class PeerService {
         iceServers: [
           {
             urls: [
-              "stun:stun.l.google.com:19302",
-              "stun:stun1.l.google.com:19302",
+              "turns:in.relay.metered.ca:443?transport=tcp",
+              "turn:in.relay.metered.ca:443?transport=tcp",
+              "turn:in.relay.metered.ca:80?transport=tcp",
             ],
-          },
-          {
-            urls: "turn:in.relay.metered.ca:443",
             username: "98bcd1a1beadc91ee56f60bc",
             credential: "s25G1WH5IOc+bxCA",
           },
         ],
-        iceTransportPolicy: "all", // Changed from "relay"
-        iceCandidatePoolSize: 10,
+        iceTransportPolicy: "relay",
+        iceCandidatePoolSize: 5,
       });
 
       // Correct placement - INSIDE the constructor
