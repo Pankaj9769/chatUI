@@ -102,23 +102,39 @@ const VideoCallDialog = ({ closeCall, isIncoming }) => {
   }, [peerConnection]);
 
   useEffect(() => {
-    const startCall = async () => {
-      if (hasMounted && socket) {
-        const newPeer = new PeerService(socket, receiver._id);
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-          video: { width: { ideal: 1280 }, height: { ideal: 720 } }, // Request specific resolution
-        });
-        console.log("peer initiated");
-        setPeerConnection(newPeer);
+    if (!isIncoming) {
+      const startCall = async () => {
+        if (hasMounted && socket) {
+          const newPeer = new PeerService(socket, receiver._id);
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: { width: { ideal: 1280 }, height: { ideal: 720 } }, // Request specific resolution
+          });
+          console.log("peer initiated");
+          setPeerConnection(newPeer);
 
-        setIsPeerReady(true);
+          setIsPeerReady(true);
 
-        setMyStream(stream);
-      }
-    };
-
-    startCall();
+          setMyStream(stream);
+        }
+      };
+      startCall();
+    } else {
+      const getLocalStream = async () => {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: { width: { ideal: 1280 }, height: { ideal: 720 } },
+          });
+          setMyStream(stream);
+        } catch (error) {
+          console.error("Error accessing media devices:", error);
+          closeCall(false);
+          setIsOpen(false);
+        }
+      };
+      getLocalStream();
+    }
   }, [socket, receiver, hasMounted]);
 
   // useEffect(() => {
@@ -161,15 +177,31 @@ const VideoCallDialog = ({ closeCall, isIncoming }) => {
     setMyStream(stream);
   };
 
+  // const emitAnswer = useCallback(
+  //   async ({ from, offer }) => {
+  //     // setRemoteId(from);
+  //     localStorage.setItem("remoteId", from);
+  //     const ans = await peerConnection.getAnswer(offer);
+  //     console.log("answer emitted");
+  //     socket.emit("answer", { to: from, ans });
+  //   },
+  //   [socket, peerConnection]
+  // );
   const emitAnswer = useCallback(
     async ({ from, offer }) => {
-      // setRemoteId(from);
-      localStorage.setItem("remoteId", from);
-      const ans = await peerConnection.getAnswer(offer);
-      console.log("answer emitted");
-      socket.emit("answer", { to: from, ans });
+      try {
+        // Create PeerService ONLY when an offer is received
+        const newPeer = new PeerService(socket, from); // Use 'from' as receiver ID
+        setPeerConnection(newPeer);
+        localStorage.setItem("remoteId", from);
+
+        const ans = await newPeer.getAnswer(offer); // Use newPeer here
+        socket.emit("answer", { to: from, ans });
+      } catch (error) {
+        console.error("Error in emitAnswer:", error);
+      }
     },
-    [socket, peerConnection]
+    [socket]
   );
 
   const sendStream = useCallback(() => {
