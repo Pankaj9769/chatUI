@@ -99,6 +99,7 @@ class PeerService {
           },
           { urls: "stun:stun.voxgratia.org" }, // STUN server as fallback
         ],
+        iceTransportPolicy: "relay",
       });
 
       // Correct placement - INSIDE the constructor
