@@ -116,6 +116,28 @@ class PeerService {
           console.log("ICE gathering complete");
         }
       };
+
+      this.peer.oniceconnectionstatechange = (event) => {
+        console.log(
+          "ICE connection state changed:",
+          this.peer.iceConnectionState
+        );
+        if (this.peer.iceConnectionState === "failed") {
+          console.error("ICE connection failed.");
+          // Handle the failure, e.g., display an error message to the user
+        }
+      };
+
+      this.peer.onicegatheringstatechange = (event) => {
+        console.log(
+          "ICE gathering state changed:",
+          this.peer.iceGatheringState
+        );
+      };
+
+      this.peer.onicecandidateerror = (event) => {
+        console.error("ICE candidate error:", event);
+      };
     }
   }
 
